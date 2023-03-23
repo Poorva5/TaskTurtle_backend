@@ -4,24 +4,26 @@ Base settings to build other settings files upon.
 from pathlib import Path
 
 import environ
+from decouple import config
 
-# ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+# ROOT_DIR = Path(_file_).resolve(strict=True).parent.parent.parent
 ROOT_DIR = environ.Path(__file__) - 3
 
-BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-# taskturtle/
-APPS_DIR = BASE_DIR / "taskturtle"
+# usb/
+APPS_DIR = ROOT_DIR.path("taskturtle")
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
-    env.read_env(str(BASE_DIR / ".env"))
+    env.read_env(str(ROOT_DIR.path(".env")))
 
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = env.bool("DJANGO_DEBUG", False)
+DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
+
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
@@ -36,35 +38,7 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#locale-paths
-LOCALE_PATHS = [str(BASE_DIR / "locale")]
-
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
-
-ALLOWED_HOSTS = ['localhost']
-
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = False
-
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "accept-encoding",
-    "authorization",
-    "content-type",
-    "dnt",
-    "origin",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
-]
-
-CORS_ALLOW_METHODS = [
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
-]
+LOCALE_PATHS = [str(ROOT_DIR.path("locale"))]
 
 # DATABASES
 # ------------------------------------------------------------------------------
@@ -114,8 +88,8 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount.providers.google",
     "django_celery_beat",
     "rest_framework",
-    "rest_framework.authtoken",
     "corsheaders",
+    "rest_framework.authtoken",
     "drf_spectacular",
     "dj_rest_auth.registration",
 ]
@@ -172,11 +146,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -186,11 +160,11 @@ MIDDLEWARE = [
 # STATIC
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = str(BASE_DIR / "staticfiles")
+STATIC_ROOT = str(ROOT_DIR("staticfiles"))
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
-STATICFILES_DIRS = [str(APPS_DIR / "static")]
+STATICFILES_DIRS = [str(APPS_DIR.path("static"))]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -200,7 +174,7 @@ STATICFILES_FINDERS = [
 # MEDIA
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = str(APPS_DIR / "media")
+MEDIA_ROOT = str(APPS_DIR("media"))
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "/media/"
 
@@ -212,7 +186,7 @@ TEMPLATES = [
         # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEMPLATES-BACKEND
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # https://docs.djangoproject.com/en/dev/ref/settings/#dirs
-        "DIRS": [str(APPS_DIR / "templates")],
+        "DIRS": [str(APPS_DIR("templates"))],
         # https://docs.djangoproject.com/en/dev/ref/settings/#app-dirs
         "APP_DIRS": True,
         "OPTIONS": {
@@ -242,14 +216,14 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 # FIXTURES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#fixture-dirs
-FIXTURE_DIRS = (str(APPS_DIR / "fixtures"),)
+FIXTURE_DIRS = (str(APPS_DIR("fixtures")),)
 
 # SECURITY
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-httponly
 SESSION_COOKIE_HTTPONLY = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-httponly
-CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_HTTPONLY = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-browser-xss-filter
 SECURE_BROWSER_XSS_FILTER = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
@@ -303,10 +277,10 @@ LOGGING = {
 if USE_TZ:
     # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-timezone
     CELERY_TIMEZONE = TIME_ZONE
-# https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-broker_url
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default='127.0.0.1:6379/1')
-# https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-result_backend
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+# # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-broker_url
+# CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+# # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std:setting-result_backend
+# CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-extended
 CELERY_RESULT_EXTENDED = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#result-backend-always-retry
@@ -363,7 +337,6 @@ REST_FRAMEWORK = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/api/.*$"
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
@@ -373,5 +346,5 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
 }
-# Your stuff...
-# ------------------------------------------------------------------------------
+# django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
+CORS_ORIGIN_ALLOW_ALL = True
