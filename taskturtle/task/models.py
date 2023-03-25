@@ -5,32 +5,32 @@ from taskturtle.users.models import User
 class Boards(BaseModel):
     title = models.CharField(max_length=255)
     image = models.ImageField(upload_to='boards_image', blank=True, null=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
-    allowed_to = models.ManyToManyField(User)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user', blank=True, null=True)
+    allowed_to = models.ManyToManyField(User, blank=True, null=True)
 
 
     def __srt__(self):
         return self.title
 
 
-class TaskData(BaseModel):
+class TaskList(BaseModel):
+    name = models.CharField(max_length=255, null=True)
+    board = models.ForeignKey(Boards, on_delete=models.CASCADE, related_name='lists', null=True)
 
-    class StatusChoices(models.TextChoices):
-        TODO = 'Todo'
-        BACKLOGS = 'Backlogs'
-        IN_PROGRESS = 'In Progress'
-        IN_REVIEW = 'In Review'
-        TESTING = 'Testing'
-        DONE = 'Done'
-        COMPLETED = 'Completed'
+    def __str__(self):
+        return self.name
+        
+
+class TaskData(BaseModel):
 
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    status = models.CharField(choices=StatusChoices.choices, max_length=255, default=StatusChoices.TODO)
+    list = models.ForeignKey(TaskList, on_delete=models.CASCADE, related_name='cards', null=True)
     members = models.ManyToManyField(User, related_name='members')
-    board = models.ForeignKey(Boards, on_delete=models.CASCADE, related_name='board')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.title
 
 
 

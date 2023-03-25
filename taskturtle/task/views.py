@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .models import TaskData, Boards
-from .serializers import TaskDataSerialzer, BoardSerializer
+from .models import TaskData, Boards, TaskList
+from .serializers import TaskDataSerialzer, BoardSerializer, TaskListSerialzier
 
 
 class BoardViewSet(viewsets.ModelViewSet):
@@ -14,4 +14,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskDataSerialzer
     
 
+class TaskListViewSet(viewsets.ModelViewSet):
+    queryset = TaskList.objects.all()
+    serializer_class = TaskListSerialzier
 
+    def get_queryset(self):
+        board_id = self.kwargs['board_id']
+        return TaskList.objects.filter(board_id=board_id)
+        
